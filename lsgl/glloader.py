@@ -32,11 +32,12 @@ class GLLoader:
     @staticmethod
     def _get_gl_api_funcs(filelines):
         func_regex = '(?<=GL\_APIENTRY\ )(\w+)(?=\ \()'
+        #func_regex = '(?<=GL\_APIENTRY\ )(\w+)\s(.*)\;$'
         return GLLoader._get_matches_in_list(func_regex, filelines)
 
     @staticmethod
     def _get_gl_load_strings(func_list):
-        loader = '%s = (PFN%sPROC)get_gl_function("%s")'
+        loader = '%s = (PFN%sPROC)get_gl_function("%s");'
         return [loader % (func, func.upper(), func) for func in func_list]
 
     @staticmethod

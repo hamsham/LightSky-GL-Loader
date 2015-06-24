@@ -1,8 +1,8 @@
 
 /*
- * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -fPIC -O2 -I./ -g -c gl_loader.c -o gl_loader.o
+ * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -fPIC -O2 -I./ -g -c lsgl.c -o lsgl.o
  *
- * ar rcs libgl_loader_d.a gl_loader.o
+ * ar rcs lilsgl_d.a lsgl.o
  */
 
 #ifndef __LS_GL_LOADER_H__
