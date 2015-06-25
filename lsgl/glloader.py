@@ -36,33 +36,28 @@ class GLLoader:
         return GLLoader._get_matches_in_list(func_regex, filelines)
 
     @staticmethod
-    def _get_gl_load_strings(func_list):
-        loader = '%s = (PFN%sPROC)get_gl_function("%s");'
-        return [loader % (func, func.upper(), func) for func in func_list]
-
-    @staticmethod
     def _write_loader_files(outfolder, includedata, srcdata):
-        def writedata(folder, extension, data):
+        def write_data(folder, extension, data):
             with open('%s/lsgl%s' % (folder, extension), 'wb') as f:
                 f.write(data)
 
-        writedata(outfolder, '.h', includedata)
-        writedata(outfolder, '.c', srcdata)
+        write_data(outfolder, '.h', includedata)
+        write_data(outfolder, '.c', srcdata)
 
     def generate_loadfile(self, glheaderfile, outfolder=DEFAULT_BUILD_DIR):
         lines = GLLoader._load_gl_header(glheaderfile)
-        funcs = GLLoader._get_gl_api_funcs(lines)
-        loadstrings = GLLoader._get_gl_load_strings(funcs)
+        glfunctions = GLLoader._get_gl_api_funcs(lines)
 
         cwd = os.path.abspath(os.path.dirname(__file__))
         pkg = jinja2.FileSystemLoader('%s/templates' % cwd, encoding='ascii')
         env = jinja2.Environment(loader=pkg)
 
-        incfile = 'lsgl_template.h'
-        srcfile = 'lsgl_template.c'
-        incdata = env.get_template(incfile).render()
-        srcdata = env.get_template(srcfile).render(loadstrings=loadstrings)
+        def populate_template(extension):
+            tempfile = 'lsgl_template%s' % extension
+            return env.get_template(tempfile).render(glfunctions=glfunctions)
 
+        incdata = populate_template('.h')
+        srcdata = populate_template('.c')
         GLLoader._write_loader_files(outfolder, incdata, srcdata)
 
 def main():
