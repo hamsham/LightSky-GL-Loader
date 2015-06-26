@@ -2,17 +2,18 @@
 /*
  * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl.o
  *
- * ar rcs lilsgl_d.a lsgl.o
+ * ar rcs liblsgl_d.a lsgl.o
  */
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "lsgl.h"
 
 #ifdef _WIN32
-    #include <GLES3/wglext.h>
+    #include <{{ glfolder }}/wglext.h>
 #elif defined (__unix__)
-    #include <GLES3/glx.h>
+    #include <{{ glfolder }}/glx.h>
 #else
     #error "An unsupported OS is currently being used."
 #endif
@@ -84,8 +85,23 @@ uintptr_t get_gl_function(const char* const name)
 -------------------------------------*/
 int lsgl_init()
 {
+    int ret = GL_TRUE;
+
     {% for func in glfunctions %}{{ func }} = (PFN{{ func.upper() }}PROC)get_gl_function("{{ func }}");
+    if (!{{ func }})
+    {
+        printf("Failed to load the OpenGL function \"{{ func }}\".\n");
+        /* ret = GL_FALSE; */
+    }
+
     {% endfor %}
-    return GL_TRUE;
+    return ret;
 }
+
+/*-------------------------------------
+ * OpenGL Function Declarations (static)
+-------------------------------------*/
+{% for func in glfunctions %}PFN{{ func.upper() }}PROC {{ func }};
+
+{% endfor %}
 

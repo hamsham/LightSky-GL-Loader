@@ -1,8 +1,8 @@
 
 /*
- * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -fPIC -O2 -I./ -g -c lsgl.c -o lsgl.o
+ * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl.o
  *
- * ar rcs lilsgl_d.a lsgl.o
+ * ar rcs liblsgl_d.a lsgl.o
  */
 
 #ifndef __LS_GL_LOADER_H__
@@ -11,13 +11,17 @@
 #include <GLES3/gl3.h>
 #include <GLES3/gl2ext.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------------------------------------
  * LightSky OpenGL Function Initializaton
 -------------------------------------*/
 int lsgl_init();
 
 /*-------------------------------------
- * OpenGL Function Declarations
+ * OpenGL Function Declarations (extern)
 -------------------------------------*/
 extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 
@@ -511,5 +515,10 @@ extern PFNGLTEXSTORAGE3DPROC glTexStorage3D;
 
 extern PFNGLGETINTERNALFORMATIVPROC glGetInternalformativ;
 
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LS_GL_LOADER_H__ */
