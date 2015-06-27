@@ -85,17 +85,16 @@ uintptr_t get_gl_function(const char* const name)
 -------------------------------------*/
 int lsgl_init()
 {
-    int ret = GL_TRUE;
+    int ret = 0; /* Contains the number of functions initialized */
 
     {% for func in glfunctions %}{{ func }} = (PFN{{ func.upper() }}PROC)get_gl_function("{{ func }}");
-    if (!{{ func }})
+    if ({{ func }})
     {
-        printf("Failed to load the OpenGL function \"{{ func }}\".\n");
-        /* ret = GL_FALSE; */
+        ++ret;
     }
 
     {% endfor %}
-    return ret;
+    return ret > 0;
 }
 
 /*-------------------------------------

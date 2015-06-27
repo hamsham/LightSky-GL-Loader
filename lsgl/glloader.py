@@ -1,4 +1,6 @@
 
+#!/usr/bin/python
+
 __author__ = 'Miles Lacey'
 
 import os
@@ -131,8 +133,17 @@ class GLLoader:
     @staticmethod
     def _get_gl_api_funcs(file_lines):
         functions = []
+        is_prototype = False
 
         for line in file_lines:
+            if line.startswith('#ifdef GL_GLEXT_PROTOTYPES'):
+                is_prototype = True
+                continue
+
+            if (line.startswith('#endif') and is_prototype) or not is_prototype:
+                is_prototype = False
+                continue
+
             match = _FUNCTION_API_PATTERN.search(line)
             blacklisted = False
 
