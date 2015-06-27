@@ -95,9 +95,9 @@ void terminate_display(SDL_Window* const pWindow)
 /*-------------------------------------
  * Create an OpenGL-compatible context
 -------------------------------------*/
-SDL_GLContext* init_context(SDL_Window* const pWindow)
+SDL_GLContext init_context(SDL_Window* const pWindow)
 {
-    SDL_GLContext* pContext = NULL;
+    SDL_GLContext pContext = NULL;
 
     // Attach the OpenGL context to our window handle
     printf("Initializing an OpenGL rendering context.\n");
@@ -128,7 +128,7 @@ SDL_GLContext* init_context(SDL_Window* const pWindow)
 /*-------------------------------------
  * Terminate an OpenGL context
 -------------------------------------*/
-void terminate_context(SDL_GLContext* const pContext)
+void terminate_context(SDL_GLContext const pContext)
 {
     SDL_GL_DeleteContext(pContext);
 }
@@ -139,7 +139,7 @@ void terminate_context(SDL_GLContext* const pContext)
 int main()
 {
     SDL_Window* pWindow = NULL;
-    SDL_GLContext* pContext = NULL;
+    SDL_GLContext pContext = NULL;
     int func_count = 0;
 
     if (!init_sdl()
