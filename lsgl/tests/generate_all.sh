@@ -1,7 +1,7 @@
 
 echo "Generating OpenGL extension loader sources"
 #python ../glloader.py -i "$1" -o ./
-python ../glloader.py -i C:\\MinGW\\mingw64\\x86_64-w64-mingw32\\include\\GLES3\\gl3.h -o ./
+python ../glloader.py -i /usr/local/include/GL/gl.h -o ./
 echo "Done."
 
 echo "Compiling loader source files..."
