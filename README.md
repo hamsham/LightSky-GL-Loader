@@ -32,8 +32,38 @@ glloader.py [-h] -i PATH_TO_GL_HEADER [-o OUTPUT_DIRECTORY] [-w WHITELISTED_EXTE
                 with 'EXT' or 'ARB' (contained within
                 '/usr/include/GLES2/gl2ext.h') to appear in the generated
                 'lsgl.h' and 'lsgl.c' source files. The default blacklist
-                includes the following extensions (as function suffixes):\n
-                %s
+                includes the following extensions (as function suffixes):
+                '3DFX',
+                '3DLABS',
+                'AGL',
+                'AMD',
+                'ANGLE',
+                'APPLE',
+                'ARB',
+                'ATI',
+                'EXT',
+                'HP',
+                'I3D',
+                'IBM',
+                'IMG',
+                'INGR',
+                'INTEL',
+                'KHR',
+                'GREMEDY',
+                'MESA',
+                'MTX',
+                'NV',
+                'NVX',
+                'OES',
+                'OVR',
+                'PGI',
+                'QCOM',
+                'OML',
+                'SGI',
+                'SGIS',
+                'SGIX',
+                'SUN',
+                'SUNX'
 
 -h              Print this help documentation.
 ```
