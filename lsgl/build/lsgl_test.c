@@ -140,6 +140,7 @@ int main()
 {
     SDL_Window* pWindow = NULL;
     SDL_GLContext* pContext = NULL;
+    int func_count = 0;
 
     if (!init_sdl()
     || !(pWindow = init_display(640, 480))
@@ -148,9 +149,11 @@ int main()
         goto terminate;
     }
 
-    if (lsgl_init() == GL_TRUE)
+    func_count = lsgl_init();
+
+    if (func_count > 0)
     {
-        printf("Successfully initialized the LightSky OpenGL API\n");
+        printf("Successfully initialized the LightSky OpenGL API with %d functions.\n", func_count);
     }
     else
     {

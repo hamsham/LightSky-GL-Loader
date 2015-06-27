@@ -1,8 +1,8 @@
 
 /*
- * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl.o
+ * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl_d.o
  *
- * ar rcs liblsgl_d.a lsgl.o
+ * ar rcs liblsgl_d.a lsgl_d.o
  */
 
 #include <stdint.h>
@@ -88,19 +88,14 @@ int lsgl_init()
     int ret = 0; /* Contains the number of functions initialized */
 
     {% for func in glfunctions %}{{ func }} = (PFN{{ func.upper() }}PROC)get_gl_function("{{ func }}");
-    if ({{ func }})
-    {
-        ++ret;
-    }
-
+    if ({{ func }}) {++ret;}
     {% endfor %}
-    return ret > 0;
+    return ret;
 }
 
 /*-------------------------------------
  * OpenGL Function Declarations (static)
 -------------------------------------*/
 {% for func in glfunctions %}PFN{{ func.upper() }}PROC {{ func }};
-
 {% endfor %}
 

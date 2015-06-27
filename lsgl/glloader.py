@@ -53,6 +53,43 @@ _EXTENSION_BLACKLIST = [
     'SUNX',
 ]
 
+PROGRAM_NAME = 'glloader'
+
+PROGRAM_DESC = 'The LSGL command-line utility can be used to generate an ' \
+               'OpenGL loader library using only the path to an OpenGL ' \
+               'header file.'
+
+PROGRAM_USAGE = """glloader.py [-h] -i PATH_TO_GL_HEADER [-o OUTPUT_DIRECTORY] [-w WHITELISTED_EXTENSIONS]
+
+-i/--input:     The input parameter should be the absolute or relative path to
+                your OpenGL header file. For example:
+                    -i /usr/include/GL/gl.h
+                    -i /usr/include/GLES2/gl2.h
+                This directory should also contain the appropriate GL/glext.h
+                (or GLES2/gl2ext.h, or similar) header file containing OpenGL
+                extensions provided by Khronos.
+
+-o/--output     The absolute or relative path to a directory which will contain
+                a generated source and header file. These files can be used to
+                dynamically load all standardized OpenGL functions available
+                on a machine at runtime.
+
+-w/--whitelist  Remove one or more vendor extensions from the list of
+                blacklisted vendor-specific OpenGL functions. Vendor-specific
+                functions are disabled by default in order to provide a uniform
+                set of standardized OpenGL functions across all target
+                platforms. For example, passing '-i /usr/include/GLES2/gl2.h
+                -w EXT ARB' will allow all available OpenGL functions suffixed
+                with 'EXT' or 'ARB' (contained within
+                '/usr/include/GLES2/gl2ext.h') to appear in the generated
+                'lsgl.h' and 'lsgl.c' source files. The default blacklist
+                includes the following extensions (as function suffixes):\n
+                %s
+
+-h              Print this help documentation.
+
+""" % '\n                '.join(_EXTENSION_BLACKLIST)
+
 GL_DESKTOP = ''
 GL_ES_1 = ''
 GL_ES_2 = '2'
@@ -145,13 +182,13 @@ class GLLoader:
                 continue
 
             match = _FUNCTION_API_PATTERN.search(line)
-            blacklisted = False
 
             if not match:
                 continue
 
             func = match.group(0)
 
+            blacklisted = False
             for ext in _EXTENSION_BLACKLIST:
                 if func.endswith(ext):
                     blacklisted = True
@@ -199,20 +236,17 @@ class GLLoader:
 def run_command_line():
     import argparse
 
-    desc = 'The LSGL command-line utility can be used to generate an OpenGL ' \
-           'loader library using only the path to an OpenGL header file.'
-
-    parser = argparse.ArgumentParser(prog="glloader", description=desc)
-
-    parser.add_argument('-i', '--input', nargs=1, required=True,
-                        help='Input the absolute path to an OpenGL header.')
-
     default_output = os.path.abspath(os.path.dirname(__file__)) + '/build'
     default_output = default_output.replace('\\', '/')
 
+    parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
+                                     description=PROGRAM_DESC,
+                                     usage=PROGRAM_USAGE)
+
+    parser.add_argument('-i', '--input', nargs=1, required=True, type=str)
     parser.add_argument('-o', '--output', nargs=1, default=default_output,
-                        help='Set the absolute or relative path to a '
-                        'location where the output library should go.')
+                        type=str)
+    parser.add_argument('-w', '--whitelist', nargs='*', type=str)
 
     args = parser.parse_args()
 
@@ -226,7 +260,14 @@ def run_command_line():
     print "Generating an OpenGL loading library."
     print "Input header file:   %r." % i
     print "Output directory:    %r." % o
+
+    if args.whitelist:
+        print "OpenGL extensions white-listed: ", args.whitelist
+        for extension in args.whitelist:
+            _EXTENSION_BLACKLIST.remove(extension)
+
     GLLoader.generate_loadfile(i, o)
+
     print "Done."
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 
 /*
- * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl.o
+ * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl_d.o
  *
- * ar rcs liblsgl_d.a lsgl.o
+ * ar rcs liblsgl_d.a lsgl_d.o
  */
 
 #ifndef __LS_GL_LOADER_H__
@@ -24,7 +24,6 @@ int lsgl_init();
  * OpenGL Function Declarations (extern)
 -------------------------------------*/
 {% for func in glfunctions %}extern PFN{{ func.upper() }}PROC {{ func }};
-
 {% endfor %}
 
 #ifdef __cplusplus
