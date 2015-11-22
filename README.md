@@ -2,9 +2,9 @@
 ### A small OpenGL extension loader generator.
 
 
-While refactoring LightSky's rendering system, I wanted to learn how extension loaders such as GLEW load OpenGL functions. OpenGL unfortunately has thousands of vendor-specific functions and loading them all by hand would be a massive pain. I decided to make a Python script which could do it all automatically and now want to share it with the Open-Source community!
+OpenGL has thousands of vendor-specific functions and loading them all by hand is a massive pain. This Python package allows you to scan an OpenGL[ES] header, and corresponding extension header, then generates C source code which can be used to load all OpenGL functions automatically.
 
-It's a small script which takes any OpenGL or GL ES header, scans for its associated extensions header, then creates a header and source which can be added to any C/C++ project.
+The resulting C source code can be added to any C/C++ project and works with all OpenGL versions. It's also compatible with Windows, OSX, and *Nix operating systems.
 
 To use the loader, follow the usage below:
 ```
