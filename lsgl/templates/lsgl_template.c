@@ -81,6 +81,12 @@ uintptr_t get_gl_function(const char* const name)
 #endif
 
 /*-------------------------------------
+ * OpenGL Function Declarations (static)
+-------------------------------------*/
+{% for func in glfunctions %}PFN{{ func.upper() }}PROC {{ func }};
+{% endfor %}
+
+/*-------------------------------------
  * LightSky OpenGL Function Initialization
 -------------------------------------*/
 int lsgl_init()
@@ -92,10 +98,4 @@ int lsgl_init()
     {% endfor %}
     return ret;
 }
-
-/*-------------------------------------
- * OpenGL Function Declarations (static)
--------------------------------------*/
-{% for func in glfunctions %}PFN{{ func.upper() }}PROC {{ func }};
-{% endfor %}
 

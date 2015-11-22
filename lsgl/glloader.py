@@ -1,14 +1,19 @@
-
 #!/usr/bin/python
-
-__author__ = 'Miles Lacey'
 
 import os
 import re
 import jinja2
 
 
-#------------------------------------------------------------------------------
+__author__ = 'Miles Lacey'
+
+
+# -----------------------------------------------------------------------------
+def expand_abspath(path):
+    return os.path.abspath(os.path.expanduser(path))
+
+
+# -----------------------------------------------------------------------------
 class GLHeaderInfo:
     """
     This class helps contain all basic information about an OpenGL header
@@ -29,6 +34,8 @@ class GLHeaderInfo:
     # Match group 3 Finds the GLES minor version ('2', '3', or '31')
 
     def __init__(self, gl_path):
+        gl_path = expand_abspath(gl_path)
+
         self.include = None  # Formatted as <GL[ES[2,3]]/gl[2,3,31].h>
         self.include_path = None  # Absolute or relative path to gl[2,3].h
         self.folder = None  # Formatted as GL[ES[2,3]]
@@ -40,6 +47,16 @@ class GLHeaderInfo:
         self._parse_gl_ext_header(gl_path)
 
     def _parse_gl_header(self, gl_path):
+        """
+        Parse an OpenGL header or extension header file located at a particular
+        path on the filesystem. Once parsed, an instance of this class will
+        know the include path, extension path, and version of the OpenGL
+        header.
+
+        :param gl_path:
+        An absolute or relative path to a location on the local filesystem
+        which represents an OpenGL header file (such as <GL/gl.h>.
+        """
         match = GLHeaderInfo._INCLUDE_PATH_PATTERN.search(gl_path)
         header = match.group(0)
         platform = match.group(1)  # desktop or mobile
@@ -58,10 +75,20 @@ class GLHeaderInfo:
             folder = 'GL%s%s' % (platform, maj_ver)
             self._parse_mobile_header(folder, maj_ver, min_ver)
 
-        assert self.version is not None, "OpenGL header path not found in %r!" % gl_path
+        assert self.version is not None, \
+            "OpenGL header path not found in %r!" % gl_path
         self.include_path = gl_path
 
     def _parse_gl_ext_header(self, gl_path):
+        """
+        Similar to GLLoader._parse_gl_header(...), this function parses an
+        OpenGL extension header in order to place extension functions into an
+        output C header/source file.
+
+        :param gl_path:
+        An absolute or relative path to a location on the local filesystem
+        which represents an OpenGL extension header file (such as <GL/glext.h>.
+        """
         self.ext_include = self.include
 
         if self.version != GLHeaderInfo.GL_DESKTOP:
@@ -76,16 +103,32 @@ class GLHeaderInfo:
         self.ext_path = '%s%sext.h' % (prefix, version)
 
     def _parse_desktop_header(self, folder='GL'):
+        """
+        Helper function to get meta-information about an OpenGL desktop header.
+
+        :param folder:
+        A relative or absolute path to a folder on the local filesystem which
+        contains an OpenGL-desktop header.
+        """
         self.folder = folder
         self.version = GLHeaderInfo.GL_DESKTOP
 
     def _parse_mobile_header(self, folder, maj_ver, min_ver):
+        """
+        Helper function to get meta-information about an OpenGL[ES] mobile
+        header.
+
+        :param folder:
+        A relative or absolute path to a folder on the local filesystem which
+        contains an OpenGL[ES]-mobile header.
+        """
+
         if not maj_ver:
             assert not min_ver, 'OpenGL ES 1.0 header not found!'
             self.version = GLHeaderInfo.GL_ES_1
 
         elif maj_ver == GLHeaderInfo.GL_ES_2:
-            assert min_ver ==GLHeaderInfo. GL_ES_2, \
+            assert min_ver == GLHeaderInfo. GL_ES_2, \
                 'OpenGL ES 2.0 header not found!'
             self.version = GLHeaderInfo.GL_ES_2
 
@@ -100,7 +143,7 @@ class GLHeaderInfo:
         self.folder = folder
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 class GLLoaderIO:
     """
     This class is simply responsible for reading/Writing any file data regarding
@@ -113,9 +156,18 @@ class GLLoaderIO:
     def load_gl_header(filename):
         """
         Load an OpenGL header file and return its contents as a list of strings.
+
+        :param filename:
+        A relative or absolute path to an OpenGL header file (such as <GL/gl.h>
+
+        :return: A list of strings which contain each line of the input header
+        file.
         """
+        filename = expand_abspath(filename)
+
         with open(filename, 'rb') as f:
             lines = f.readlines()
+
         return lines
 
     @staticmethod
@@ -123,8 +175,21 @@ class GLLoaderIO:
         """
         Write all header and source file information to a folder, specified at
         runtime.
+
+        :param out_folder:
+        A string containing the output folder which the generated OpenGL source
+        files will be placed.
+
+        :param inc_data:
+        A string containing the generated OpenGL function loader data which
+        will be placed into a C header file.
+
+        :param src_data:
+        A string containing the generated OpenGL function loader data which
+        will be placed into a C source file.
         """
         def write_data(folder, extension, data):
+            folder = expand_abspath(folder)
             with open('%s/lsgl%s' % (folder, extension), 'wb') as f:
                 f.write(data)
 
@@ -132,7 +197,7 @@ class GLLoaderIO:
         write_data(out_folder, '.c', src_data)
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 class GLLoader:
     """
     The GLLoader class is the meat and potatoes of this program. Once an OpenGL
@@ -175,14 +240,40 @@ class GLLoader:
         ]
 
     def _is_ext_blacklisted(self, gl_func):
+        """
+        Determine if an OpenGL extension type is blacklisted from the list of
+        all available functions contained within an instance of this class.
+
+        :param gl_func:
+        A string containing the suffix of an OpenGL extension (such as EXT,
+        ARB, AMD, etc).
+
+        :return: True if the extension is currently blacklisted, None if not.
+        By default, all OpenGL extensions are blacklisted in order to provide
+        the most portable set of OpenGL functions possible.
+        """
+        gl_func = gl_func.lower()
+
         for ext in self.blacklist:
-            if gl_func.endswith(ext):
+            if gl_func.endswith(ext.lower()):
                 return True
 
     def _get_gl_api_funcs(self, file_lines):
+        """
+        Parse a loaded OpenGL header file and return all of the functions
+        contained within it.
+
+        :param file_lines:
+        A list of strings containing all of the individual lines of an OpenGL
+        header file.
+
+        :return:
+        A list of strings containing only the function declarations extracted
+        from an OpenGL header file.
+        """
         functions = []
         in_ext_block = False
-        func_api_pattern = re.compile(r'(?<=APIENTRY\ )(\w+)(?=\ \()')
+        func_api_pattern = re.compile(r'(?<=APIENTRY )(\w+)(?= \()')
         # Matches the name of an OpenGL function within an OpenGL header file.
 
         for line in file_lines:
@@ -210,6 +301,21 @@ class GLLoader:
         return functions
 
     def generate_loadfile(self, gl_header_path, out_folder):
+        """
+        Create a C header and source file which can be used to load a set of
+        OpenGL functions contained within a user-provided OpenGL header file
+        (such as <GL/gl.h>).
+
+        :param gl_header_path:
+        The absolute or relative path to an OpenGL header file.
+
+        :param out_folder:
+        The absolute or relative path to a folder which will contain the output
+        C header and source files.
+        """
+        gl_header_path = expand_abspath(gl_header_path)
+        out_folder = expand_abspath(out_folder)
+
         info = GLHeaderInfo(gl_header_path)
         funcs = GLLoaderIO.load_gl_header(gl_header_path)
         ext_funcs = GLLoaderIO.load_gl_header(info.ext_path)
@@ -231,83 +337,3 @@ class GLLoader:
         inc_data = populate_template('.h')
         src_data = populate_template('.c')
         GLLoaderIO.write_gl_loader_sources(out_folder, inc_data, src_data)
-
-#------------------------------------------------------------------------------
-PROGRAM_NAME = 'glloader'
-
-PROGRAM_DESC = 'The LSGL command-line utility can be used to generate an ' \
-               'OpenGL loader library using only the path to an OpenGL ' \
-               'header file.'
-
-PROGRAM_USAGE = """glloader.py [-h] -i PATH_TO_GL_HEADER [-o OUTPUT_DIRECTORY] [-w WHITELISTED_EXTENSIONS]
-
--i/--input:     The input parameter should be the absolute or relative path to
-                your OpenGL header file. For example:
-                    -i /usr/include/GL/gl.h
-                    -i /usr/include/GLES2/gl2.h
-                This directory should also contain the appropriate GL/glext.h
-                (or GLES2/gl2ext.h, or similar) header file containing OpenGL
-                extensions provided by Khronos.
-
--o/--output     The absolute or relative path to a directory which will contain
-                a generated source and header file. These files can be used to
-                dynamically load all standardized OpenGL functions available
-                on a machine at runtime.
-
--w/--whitelist  Remove one or more vendor extensions from the list of
-                blacklisted vendor-specific OpenGL functions. Vendor-specific
-                functions are disabled by default in order to provide a uniform
-                set of standardized OpenGL functions across all target
-                platforms. For example, passing '-i /usr/include/GLES2/gl2.h
-                -w EXT ARB' will allow all available OpenGL functions suffixed
-                with 'EXT' or 'ARB' (contained within
-                '/usr/include/GLES2/gl2ext.h') to appear in the generated
-                'lsgl.h' and 'lsgl.c' source files. The default blacklist
-                includes the following extensions (as function suffixes):\n
-                %s
-
--h              Print this help documentation.
-
-""" % '\n                '.join(GLLoader().blacklist)
-
-#------------------------------------------------------------------------------
-def run_command_line():
-    import argparse
-
-    default_output = os.path.abspath(os.path.dirname(__file__)) + '/build'
-    default_output = default_output.replace('\\', '/')
-
-    parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
-                                     description=PROGRAM_DESC,
-                                     usage=PROGRAM_USAGE)
-
-    parser.add_argument('-i', '--input', nargs=1, required=True, type=str)
-    parser.add_argument('-o', '--output', nargs=1, default=default_output,
-                        type=str)
-    parser.add_argument('-w', '--whitelist', nargs='*', type=str)
-
-    args = parser.parse_args()
-
-    if not args.input:
-        parser.print_usage()
-        return
-
-    i = args.input if isinstance(args.input, str) else args.input[0]
-    o = args.output if isinstance(args.output, str) else args.output[0]
-
-    print "Generating an OpenGL loading library."
-    print "Input header file:   %r." % i
-    print "Output directory:    %r." % o
-
-    loader = GLLoader()
-    if args.whitelist:
-        print "OpenGL extensions white-listed: ", args.whitelist
-        for extension in args.whitelist:
-            loader.blacklist.remove(extension)
-
-    loader.generate_loadfile(i, o)
-
-    print "OpenGL extension loading library generated!"
-
-if __name__ == '__main__':
-    run_command_line()
