@@ -6,13 +6,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "lsgl.h"
+
 #ifndef SDL_MAIN_HANDLED
     #define SDL_MAIN_HANDLED
 #endif
 
 #include <SDL2/SDL.h>
-
-#include "lsgl.h"
 
 /*-------------------------------------
  * SDL2 Initialization
@@ -23,9 +23,9 @@ int init_sdl()
 
     SDL_SetMainReady();
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 
     if (SDL_Init(sdlInitFlags) < 0)
@@ -116,10 +116,6 @@ SDL_GLContext init_context(SDL_Window* const pWindow)
     // Quick setup in order to normalize OpenGL to the display coordinates.
     SDL_GL_MakeCurrent(pWindow, pContext);
 
-    // Set the default back buffer color
-    glClearColor(1.f, 0.f, 1.f, 1.f);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
     printf("\tSuccessfully initialized a OpenGL 3.3-compatible render context.\n");
 
     return pContext;
@@ -159,6 +155,12 @@ int main()
     {
         printf("Failed to initialize the LightSky OpenGL API\n");
     }
+
+    fflush(stdout);
+
+    // Set the default back buffer color
+    glClearColor(1.f, 0.f, 1.f, 1.f);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     terminate:
     terminate_context(pContext);

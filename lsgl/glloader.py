@@ -26,8 +26,10 @@ class GLHeaderInfo:
     GL_ES_2 = '2'
     GL_ES_3 = '3'
     GL_ES_3_1 = '31'
+    GL_ES_3_2 = '32'
 
-    _INCLUDE_PATH_PATTERN = re.compile(r'\bGL(ES)?(\d?)[\\/]gl(corearb|\d+)?\.h$')
+    _INCLUDE_PATH_PATTERN = re.compile(
+        r'\bGL(ES)?(\d?)[\\/]gl(corearb|\d+)?\.h$')
     # Match group 0 Determines the OpenGL header include path
     # Match group 1 Finds the OpenGL folder (None for GL, or 'ES' for GLES)
     # Match group 2 Identifies the GLES major version ('', '2', or '3')
@@ -90,17 +92,34 @@ class GLHeaderInfo:
         which represents an OpenGL extension header file (such as <GL/glext.h>.
         """
         self.ext_include = self.include
+        am_gles3 = False
 
-        if self.version != GLHeaderInfo.GL_DESKTOP:
-            version = GLHeaderInfo.GL_ES_2
-        else:
+        if self.version == GLHeaderInfo.GL_DESKTOP:
             version = GLHeaderInfo.GL_DESKTOP
+        elif self.version == GLHeaderInfo.GL_ES_1:
+            version = GLHeaderInfo.GL_ES_1
+        else:
+            version = GLHeaderInfo.GL_ES_2
+            am_gles3 = self.version is not GLHeaderInfo.GL_ES_2
 
         prefix = self.include[:self.include.rindex('l') + 1]
         self.ext_include = '%s%sext.h>' % (prefix, version)
 
         prefix = gl_path[:gl_path.rindex('l') + 1]
         self.ext_path = '%s%sext.h' % (prefix, version)
+
+        # GLES 3+ extension headers are located in the GLES2 directory
+        if am_gles3:
+            gles3_index_a = self.ext_include.rfind('GLES3')
+            gles3_index_b = self.ext_path.rfind('GLES3')
+            self.ext_include = \
+                self.ext_include[:gles3_index_a] +\
+                'GLES2' + \
+                self.ext_include[gles3_index_a+5:]
+            self.ext_path = \
+                self.ext_path[:gles3_index_b] + \
+                'GLES2' + \
+                self.ext_path[gles3_index_b+5:]
 
     def _parse_desktop_header(self, folder='GL'):
         """
@@ -138,7 +157,10 @@ class GLHeaderInfo:
 
             elif min_ver == GLHeaderInfo.GL_ES_3_1:
                 self.version = GLHeaderInfo.GL_ES_3_1
-            assert self.version, 'OpenGL ES 3.0 or 3.1 header not found!'
+
+            elif min_ver == GLHeaderInfo.GL_ES_3_2:
+                self.version = GLHeaderInfo.GL_ES_3_2
+            assert self.version, 'OpenGLES 3.0, 3.1, and 3.2 headers not found!'
 
         self.folder = folder
 
@@ -165,7 +187,7 @@ class GLLoaderIO:
         """
         filename = expand_abspath(filename)
 
-        with open(filename, 'rb') as f:
+        with open(filename, 'r') as f:
             lines = f.readlines()
 
         return lines
@@ -192,8 +214,8 @@ class GLLoaderIO:
             folder = expand_abspath(folder)
             if not os.path.isdir(folder):
                 os.mkdir(folder)
-            with open('%s/lsgl%s' % (folder, extension), 'wb') as f:
-                f.write(data.encode('utf-8'))
+            with open('%s/lsgl%s' % (folder, extension), 'w') as f:
+                f.write(data)
 
         write_data(out_folder, '.h', inc_data)
         write_data(out_folder, '.c', src_data)
@@ -254,13 +276,12 @@ class GLLoader:
         By default, all OpenGL extensions are blacklisted in order to provide
         the most portable set of OpenGL functions possible.
         """
-        gl_func = gl_func.lower()
+        gl_func = gl_func.upper()
 
-        for ext in self.blacklist:
-            if gl_func.endswith(ext.lower()):
-                return True
+        exts = [ext for ext in self.blacklist if gl_func.endswith(ext)]
+        return True if exts else False
 
-    def _get_gl_api_funcs(self, file_lines):
+    def _get_gl_api_funcs(self, info, file_lines):
         """
         Parse a loaded OpenGL header file and return all of the functions
         contained within it.
@@ -274,30 +295,62 @@ class GLLoader:
         from an OpenGL header file.
         """
         functions = []
+        in_sys_block = False
         in_ext_block = False
         func_api_pattern = re.compile(r'(?<=APIENTRY )(\w+)(?= \()')
+        define_count = 0
+
+        if info.version is GLHeaderInfo.GL_DESKTOP:
+            ext_define = '#ifdef GL_GLEXT_PROTOTYPES'
+            sys_block = [
+                '#ifndef GL_VERSION_1_0',
+                '#ifndef GL_VERSION_1_1',
+                '#ifndef GL_VERSION_1_2',
+                '#ifndef GL_VERSION_1_3',
+                '#ifndef GL_VERSION_1_4',
+            ]
+        else:
+            ext_define = ''  # '#if GL_GLES_PROTOTYPES'
+            sys_block = []
+
         # Matches the name of an OpenGL function within an OpenGL header file.
 
         for line in file_lines:
-            if line.startswith(b'#ifdef GL_GLEXT_PROTOTYPES'):
+            if line.strip() in sys_block:
+                define_count = define_count+1
+                in_sys_block = True
+                continue
+
+            if line.strip() == ext_define:
+                define_count = define_count+1
                 in_ext_block = True
+                continue
+
+            if line.startswith('#ifdef') and in_sys_block:
+                define_count = define_count+1
                 continue
 
             # Only function prototypes within the "GL_GLEXT_PROTOTYPES" #define
             # blocks should be retrieved. Otherwise the resulting loader library
             # will redeclare functions provided by the OS.
-            if (line.startswith(b'#endif') and in_ext_block) or not in_ext_block:
-                in_ext_block = False
+            if line.startswith('#endif') and in_sys_block:
+                define_count = define_count-1
+
+                if not define_count:
+                    in_sys_block = False
                 continue
 
-            match = func_api_pattern.search(str(line))
+            if in_sys_block or not in_ext_block:
+                continue
+
+            match = func_api_pattern.search(line)
 
             if not match:
                 continue
 
             func = match.group(0)
 
-            if not self._is_ext_blacklisted(func):
+            if not self._is_ext_blacklisted(func) and func not in functions:
                 functions.append(func)
 
         return functions
@@ -322,19 +375,35 @@ class GLLoader:
         funcs = GLLoaderIO.load_gl_header(gl_header_path)
         ext_funcs = GLLoaderIO.load_gl_header(info.ext_path)
 
-        gl_funcs = self._get_gl_api_funcs(funcs + ext_funcs)
+        if 'corearb' in info.include:
+            gl_funcs = self._get_gl_api_funcs(info, funcs)
+        else:
+            gl_funcs = self._get_gl_api_funcs(info, funcs+ext_funcs)
+
         cwd = os.path.abspath(os.path.dirname(__file__))
         pkg = jinja2.FileSystemLoader('%s/templates' % cwd, encoding='ascii')
         env = jinja2.Environment(loader=pkg)
+        ctx = '-1'
+
+        if info.version == GLHeaderInfo.GL_DESKTOP:
+            if os.name == 'posix':
+                ctx = 'LS_GLX_BACKEND'
+            elif os.name == 'nt':
+                ctx = 'LS_WGL_CONTEXT'
+            else:
+                ctx = 'LS_UNKNOWN_CONTEXT'
+        else:
+            ctx = 'LS_EGL_CONTEXT'
 
         def populate_template(extension):
             tmp_file = 'lsgl_template%s' % extension
             template = env.get_template(tmp_file)
             return template.render(glheader=info.include,
                                    glextheader=info.ext_include,
-                                   glfolder=info.folder,
+                                   glfolder='GL',
                                    glversion=info.version,
-                                   glfunctions=gl_funcs)
+                                   glfunctions=gl_funcs,
+                                   glContext=ctx)
 
         inc_data = populate_template('.h')
         src_data = populate_template('.c')
