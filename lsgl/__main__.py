@@ -1,3 +1,4 @@
+#!/bin/env python3
 
 import argparse
 import os
@@ -70,19 +71,19 @@ def run_command_line():
     i = args.input
     o = args.output
 
-    print "Generating an OpenGL loading library."
-    print "Input header file:   %r." % i
-    print "Output directory:    %r." % o
+    print("Generating an OpenGL loading library.")
+    print("Input header file:   %r." % i)
+    print("Output directory:    %r." % o)
 
     loader = GLLoader()
     if args.whitelist:
-        print "OpenGL extensions white-listed: ", args.whitelist
+        print("OpenGL extensions white-listed: ", args.whitelist)
         for extension in args.whitelist:
             loader.blacklist.remove(extension)
 
     loader.generate_loadfile(i, o)
 
-    print "OpenGL extension loading library generated!"
+    print("OpenGL extension loading library generated!")
 
 
 if __name__ == '__main__':

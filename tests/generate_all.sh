@@ -1,7 +1,7 @@
 
 echo "Generating OpenGL extension loader sources"
-#python ../glloader.py -i "$1" -o ./
-python ../glloader.py -i /usr/local/include/GL/gl.h -o ./
+#python3 ../glloader.py -i "$1" -o ./
+python3 ../__main__.py -i ../GL/glcorearb.h -o ./
 echo "Done."
 
 echo "Compiling loader source files..."
@@ -15,7 +15,7 @@ ar rcs liblsgl.a lsgl.o
 echo "Done."
 
 echo "Compiling the OpenGL extension loader test.."
-gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g lsgl_test.c -o lsgl_test -L./ -llsgl_d -lSDL2main -lSDL2 -lopengl32
+gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g lsgl_test.c -o lsgl_test -L./ -llsgl_d -lSDL2main -lSDL2 -lGL
 echo "Done."
 
 echo "Running OpenGL extension loader test."

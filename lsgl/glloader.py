@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/env python3
 
 import os
 import re
@@ -27,7 +27,7 @@ class GLHeaderInfo:
     GL_ES_3 = '3'
     GL_ES_3_1 = '31'
 
-    _INCLUDE_PATH_PATTERN = re.compile(r'\bGL(ES)?(\d?)\\gl(\d{1,2})?\.h$')
+    _INCLUDE_PATH_PATTERN = re.compile(r'\bGL(ES)?(\d?)[\\/]gl(corearb|\d+)?\.h$')
     # Match group 0 Determines the OpenGL header include path
     # Match group 1 Finds the OpenGL folder (None for GL, or 'ES' for GLES)
     # Match group 2 Identifies the GLES major version ('', '2', or '3')
@@ -190,8 +190,10 @@ class GLLoaderIO:
         """
         def write_data(folder, extension, data):
             folder = expand_abspath(folder)
+            if not os.path.isdir(folder):
+                os.mkdir(folder)
             with open('%s/lsgl%s' % (folder, extension), 'wb') as f:
-                f.write(data)
+                f.write(data.encode('utf-8'))
 
         write_data(out_folder, '.h', inc_data)
         write_data(out_folder, '.c', src_data)
@@ -277,18 +279,18 @@ class GLLoader:
         # Matches the name of an OpenGL function within an OpenGL header file.
 
         for line in file_lines:
-            if line.startswith('#ifdef GL_GLEXT_PROTOTYPES'):
+            if line.startswith(b'#ifdef GL_GLEXT_PROTOTYPES'):
                 in_ext_block = True
                 continue
 
             # Only function prototypes within the "GL_GLEXT_PROTOTYPES" #define
             # blocks should be retrieved. Otherwise the resulting loader library
             # will redeclare functions provided by the OS.
-            if (line.startswith('#endif') and in_ext_block) or not in_ext_block:
+            if (line.startswith(b'#endif') and in_ext_block) or not in_ext_block:
                 in_ext_block = False
                 continue
 
-            match = func_api_pattern.search(line)
+            match = func_api_pattern.search(str(line))
 
             if not match:
                 continue
