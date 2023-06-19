@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 project(LS_GL_Loader C)
 
 set(CMAKE_C_STANDARD 99)
@@ -10,6 +10,7 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 # External Package Setup
 # -------------------------------------
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+include(external_deps.cmake)
 include(SDL2Config.cmake)
 
 
