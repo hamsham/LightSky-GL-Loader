@@ -1,8 +1,8 @@
 
 /*
- * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsgl.c -o lsgl_d.o
+ * gcc --std=c99 -pedantic -pedantic-errors -Wall -Werror -Wextra -O2 -I./ -g -c lsvk.c -o lsvk_d.o
  *
- * ar rcs liblsgl_d.a lsgl_d.o
+ * ar rcs liblsvk_d.a lsvk_d.o
  */
 
 #include <stdint.h>

@@ -14,7 +14,7 @@
     #define VK_NO_PROTOTYPES 1
 #endif
 
-#include {{ vkheader }}
+#include "{{ vkheader }}"
 
 #ifdef __cplusplus
 extern "C" {
