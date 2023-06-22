@@ -383,17 +383,6 @@ class GLLoader:
         cwd = os.path.abspath(os.path.dirname(__file__))
         pkg = jinja2.FileSystemLoader('%s/templates' % cwd, encoding='ascii')
         env = jinja2.Environment(loader=pkg)
-        ctx = '-1'
-
-        if info.version == GLHeaderInfo.GL_DESKTOP:
-            if os.name == 'posix':
-                ctx = 'LS_GLX_BACKEND'
-            elif os.name == 'nt':
-                ctx = 'LS_WGL_CONTEXT'
-            else:
-                ctx = 'LS_UNKNOWN_CONTEXT'
-        else:
-            ctx = 'LS_EGL_CONTEXT'
 
         def populate_template(extension):
             tmp_file = 'lsgl_template%s' % extension
@@ -402,8 +391,7 @@ class GLLoader:
                                    glextheader=info.ext_include,
                                    glfolder='GL',
                                    glversion=info.version,
-                                   glfunctions=gl_funcs,
-                                   glContext=ctx)
+                                   glfunctions=gl_funcs)
 
         inc_data = populate_template('.h')
         src_data = populate_template('.c')

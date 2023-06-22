@@ -11,11 +11,13 @@
 #include "lsvk.h"
 
 
-
+{% for func_type, func_set in vktypedfuncs.items() %}
 /*-------------------------------------
- * Vulkan Function Declarations (static)
+ * {{ func_type }} Function Declarations
 -------------------------------------*/
-{% for func in vkfunctions %}PFN_{{ func }} {{ func }};
+{% for func in func_set %}PFN_{{ func }} {{ func }};
+{% endfor %}
+
 {% endfor %}
 
 

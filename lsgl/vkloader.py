@@ -180,10 +180,14 @@ class VKLoader:
         A list of strings containing only the function declarations extracted
         from an OpenGL header file.
         """
-        functions = []
+        functions = set()
         in_ext_block = False
         func_api_pattern = re.compile(r'\(VKAPI_PTR\s+\*PFN_(vk[a-zA-Z0-9_-]+)\)')
+        func_arg_pattern = re.compile(r'\(VKAPI_PTR\s+\*PFN_vk[a-zA-Z0-9_-]+(\)\(.+\));')
         version_pattern = re.compile(r'(VK_VERSION_(\d+)_(\d+))')
+        handle_pattern = re.compile(r'VK_DEFINE_HANDLE\((Vk[a-zA-Z0-9_-]+)\)')
+        handle_types = set()
+        typed_funcs = {'global': set()}
         define_count = 0
         version_maj = 1
         version_min = 0
@@ -223,19 +227,34 @@ class VKLoader:
             if in_ext_block:
                 continue
 
-            match = func_api_pattern.search(line)
-
-            if not match:
+            handle_match = handle_pattern.search(line)
+            if handle_match:
+                handle = handle_match.group(1)
+                handle_types.add(handle)
+                typed_funcs[handle] = set()
                 continue
 
-            func = match.group(1)
+            func_name_match = func_api_pattern.search(line)
+            if not func_name_match:
+                continue
 
-            if not self._is_ext_blacklisted(func) and func not in functions:
-                functions.append(func)
+            func = func_name_match.group(1)
+            if self._is_ext_blacklisted(func):
+                continue
+            functions.add(func)
+
+            args_match = func_arg_pattern.search(line)
+            args = args_match.group(1) if args_match else ''
+
+            for handle in handle_types:
+                if f')({handle} ' in args:
+                    typed_funcs[handle].add(func)
+                else:
+                    typed_funcs['global'].add(func)
 
         self.version_maj = version_maj
         self.version_min = version_min
-        return functions
+        return functions, typed_funcs
 
     def generate_loadfile(self, vk_header_path, out_folder):
         """
@@ -256,7 +275,7 @@ class VKLoader:
         funcs = VKLoaderIO.load_vk_header(vk_header_path)
 
         if info.include.endswith('_core.h'):
-            vk_funcs = self._get_vk_api_funcs(info, funcs)
+            vk_funcs, vk_typed_funcs = self._get_vk_api_funcs(info, funcs)
 
         cwd = os.path.abspath(os.path.dirname(__file__))
         pkg = jinja2.FileSystemLoader('%s/templates' % cwd, encoding='ascii')
@@ -267,7 +286,8 @@ class VKLoader:
             template = env.get_template(tmp_file)
             return template.render(vkheader=info.include,
                                    vkfolder='vulkan',
-                                   vkfunctions=vk_funcs)
+                                   vkfunctions=vk_funcs,
+                                   vktypedfuncs=vk_typed_funcs)
 
         inc_data = populate_template('.h')
         src_data = populate_template('.c')

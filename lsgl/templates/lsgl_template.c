@@ -10,33 +10,33 @@
 
 #include "lsgl.h"
 
-#ifndef LS_EGL_CONTEXT
-    #define LS_EGL_CONTEXT 0
+#ifndef EGL_CONTEXT
+    #define EGL_CONTEXT 0
 #endif
 
-#ifndef LS_GLX_CONTEXT
-    #define LS_GLX_CONTEXT 1
+#ifndef GLX_CONTEXT
+    #define GLX_CONTEXT 1
 #endif
 
-#ifndef LS_WGL_CONTEXT
-    #define LS_WGL_CONTEXT 2
+#ifndef WGL_CONTEXT
+    #define WGL_CONTEXT 2
 #endif
 
-#ifndef LS_UNKNOWN_CONTEXT
-    #define LS_UNKNOWN_CONTEXT -1
+#ifndef UNKNOWN_CONTEXT
+    #define UNKNOWN_CONTEXT -1
 #endif
 
-#ifndef LS_GL_CONTEXT
-    #define LS_GL_CONTEXT {{ glContext }}
+#ifndef GL_CONTEXT
+    #error "No context backend enabled."
 #endif
 
-#if LS_GL_CONTEXT == LS_EGL_CONTEXT
+#if GL_CONTEXT == EGL_CONTEXT
     #include <EGL/egl.h>
     #include <EGL/eglext.h>
-#elif LS_GL_CONTEXT == LS_GLX_CONTEXT
+#elif GL_CONTEXT == GLX_CONTEXT
     #include <{{ glfolder }}/glx.h>
     #include <{{ glfolder }}/glxext.h>
-#elif LS_GL_CONTEXT == LS_WGL_CONTEXT
+#elif GL_CONTEXT == WGL_CONTEXT
     #include <{{ glfolder }}/wgl.h>
 #else
     #error "An unsupported OS is currently being used."
@@ -45,7 +45,7 @@
 /*-----------------------------------------------------------------------------
  * Windows OpenGL Function Loading
 -----------------------------------------------------------------------------*/
-#if LS_GL_CONTEXT == LS_WGL_CONTEXT
+#if GL_CONTEXT == WGL_CONTEXT
 
 HMODULE get_gl_library()
 {
@@ -72,7 +72,7 @@ uintptr_t get_gl_function(const char* const name)
 /*-----------------------------------------------------------------------------
  * Unix-Based OpenGL Function Loading
 -----------------------------------------------------------------------------*/
-#elif LS_GL_CONTEXT == LS_GLX_CONTEXT
+#elif GL_CONTEXT == GLX_CONTEXT
 
 uintptr_t get_gl_function(const char* const name)
 {
@@ -93,7 +93,7 @@ uintptr_t get_gl_function(const char* const name)
 /*-----------------------------------------------------------------------------
  * EGL-Based OpenGL Function Loading
 -----------------------------------------------------------------------------*/
-#elif LS_GL_CONTEXT == LS_EGL_CONTEXT
+#elif GL_CONTEXT == EGL_CONTEXT
 
 uintptr_t get_gl_function(const char* const name)
 {

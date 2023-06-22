@@ -75,14 +75,11 @@ def run_command_line():
         parser.print_usage()
         return
 
-    i = args.input
-    o = args.output
+    input_header = os.path.realpath(args.input)
+    output_dir = os.path.realpath(args.output)
+    extensions = args.extensions
 
-    print('Generating an OpenGL loading library.')
-    print('Input header file:   %r.' % i)
-    print('Output directory:    %r.' % o)
-
-    with open(args.input, 'r') as header:
+    with open(input_header, 'r') as header:
         for line in header.readlines():
             if '#ifndef VULKAN_CORE_H_' in line:
                 am_vk = True
@@ -92,21 +89,27 @@ def run_command_line():
 
     loader = VKLoader() if am_vk else GLLoader()
     flavor = 'Vulkan' if am_vk else 'OpenGL'
-    print(f'{flavor} extension loading library generated!')
 
-    if '*' in args.extensions:
+    if '*' in extensions:
         print(f'All {flavor} extensions enabled.')
         loader.blacklist = []
-    elif args.extensions:
-        print('Extensions enabled: %s' % args.extensions)
-        for extension in args.extensions:
+        extensions = '*'
+    elif extensions:
+        for extension in extensions:
             try:
                 loader.blacklist.remove(extension)
             except ValueError:
                 print(f'Unknown extension: {extension}')
+                extensions.remove(extension)
 
-    loader.generate_loadfile(i, o)
+    print(f'Render API Detected:    {flavor}')
+    print(f'Input header file:      {input_header}')
+    print(f'Output directory:       {output_dir}')
+    print(f'Extensions enabled:     {extensions!s}')
+
+    loader.generate_loadfile(input_header, output_dir)
 
 
+# -----------------------------------------------------------------------------
 if __name__ == '__main__':
     run_command_line()
