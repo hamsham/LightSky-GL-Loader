@@ -249,8 +249,9 @@ class VKLoader:
             for handle in handle_types:
                 if f')({handle} ' in args:
                     typed_funcs[handle].add(func)
-                else:
-                    typed_funcs['global'].add(func)
+                    break
+            else:
+                typed_funcs['global'].add(func)
 
         self.version_maj = version_maj
         self.version_min = version_min
