@@ -193,10 +193,14 @@ class GLLoaderIO:
         return lines
 
     @staticmethod
-    def write_gl_loader_sources(out_folder, inc_data, src_data):
+    def write_gl_loader_sources(version, out_folder, inc_data, src_data):
         """
         Write all header and source file information to a folder, specified at
         runtime.
+
+        :param version:
+        A string containing GL_DESKTOP, to indicate we're writing Desktop GL
+        file data, or a variant of the GL_ES* version strings.
 
         :param out_folder:
         A string containing the output folder which the generated OpenGL source
@@ -210,11 +214,13 @@ class GLLoaderIO:
         A string containing the generated OpenGL function loader data which
         will be placed into a C source file.
         """
+        outname = 'lsgl' if version is GLHeaderInfo.GL_DESKTOP else 'lsgles'
+
         def write_data(folder, extension, data):
             folder = expand_abspath(folder)
             if not os.path.isdir(folder):
                 os.mkdir(folder)
-            with open('%s/lsgl%s' % (folder, extension), 'w') as f:
+            with open('%s/%s%s' % (folder, outname, extension), 'w') as f:
                 f.write(data)
 
         write_data(out_folder, '.h', inc_data)
@@ -398,4 +404,5 @@ class GLLoader:
 
         inc_data = populate_template(header_template)
         src_data = populate_template(source_template)
-        GLLoaderIO.write_gl_loader_sources(out_folder, inc_data, src_data)
+        GLLoaderIO.write_gl_loader_sources(info.version, out_folder, inc_data,
+                                           src_data)
