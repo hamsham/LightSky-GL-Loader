@@ -113,7 +113,7 @@ class GLHeaderInfo:
             gles3_index_a = self.ext_include.rfind('GLES3')
             gles3_index_b = self.ext_path.rfind('GLES3')
             self.ext_include = \
-                self.ext_include[:gles3_index_a] +\
+                self.ext_include[:gles3_index_a] + \
                 'GLES2' + \
                 self.ext_include[gles3_index_a+5:]
             self.ext_path = \
@@ -355,7 +355,11 @@ class GLLoader:
 
         return functions
 
-    def generate_loadfile(self, gl_header_path, out_folder):
+    def generate_loadfile(self,
+                          gl_header_path,
+                          out_folder,
+                          header_template,
+                          source_template):
         """
         Create a C header and source file which can be used to load a set of
         OpenGL functions contained within a user-provided OpenGL header file
@@ -380,19 +384,18 @@ class GLLoader:
         else:
             gl_funcs = self._get_gl_api_funcs(info, funcs+ext_funcs)
 
-        cwd = os.path.abspath(os.path.dirname(__file__))
-        pkg = jinja2.FileSystemLoader('%s/templates' % cwd, encoding='ascii')
-        env = jinja2.Environment(loader=pkg)
-
-        def populate_template(extension):
-            tmp_file = 'lsgl_template%s' % extension
-            template = env.get_template(tmp_file)
+        def populate_template(file_template):
+            cwd = os.path.abspath(os.path.split(file_template)[0])
+            filename = os.path.basename(file_template)
+            pkg = jinja2.FileSystemLoader(cwd, encoding='ascii')
+            env = jinja2.Environment(loader=pkg)
+            template = env.get_template(filename)
             return template.render(glheader=info.include,
                                    glextheader=info.ext_include,
                                    glfolder='GL',
                                    glversion=info.version,
                                    glfunctions=gl_funcs)
 
-        inc_data = populate_template('.h')
-        src_data = populate_template('.c')
+        inc_data = populate_template(header_template)
+        src_data = populate_template(source_template)
         GLLoaderIO.write_gl_loader_sources(out_folder, inc_data, src_data)

@@ -14,10 +14,10 @@ __author__ = 'Miles Lacey'
 PROGRAM_NAME = 'lsgl'
 
 PROGRAM_DESC = 'The LSGL command-line utility can be used to generate an ' \
-               'OpenGL or Vulkan loader library using only the path to a '\
+               'OpenGL or Vulkan loader library using only the path to a ' \
                'header file.'
 
-PROGRAM_USAGE = '''lsgl.py [-h] -i GL_VK_HEADER_PATH [-o OUTPUT_DIRECTORY] [-e ENABLED_EXTENSIONS]
+PROGRAM_USAGE = '''lsgl.py [-h] -i GL_VK_HEADER_PATH [-o OUTPUT_DIRECTORY] [-e ENABLED_EXTENSIONS] [-d DECLARATION_TEMPLATE] [-s SOURCE_TEMPLATE]
 
 -i/--input:     The input parameter should be the absolute or relative path to
                 your OpenGL or Vulkan header file. For example:
@@ -50,6 +50,25 @@ PROGRAM_USAGE = '''lsgl.py [-h] -i GL_VK_HEADER_PATH [-o OUTPUT_DIRECTORY] [-e E
                 OpenGL extensions disabled by default are: {0}\n
                 Vulkan extensions disabled by default are: {1}\n
 
+-d/--declaration Provides a path to a user-defined Jinja2 template which will
+                be used for a generated header file.
+                
+                OpenGL templates are passed the following parameters:
+                - glheader:    Formatted as <GL[ES[2,3]]/gl[2,3,31].h>
+                - glextheader: Formatted as <GL[ES[2,3]]/gl[2,3]ext.h>
+                - glfolder:    Currently 'GL'
+                - glversion:   Can be 'GL_DESKTOP' or 'GL_ES_[123][_[12]]'
+                - glfunctions: A list of function strings in the form 'glFunc'
+                
+                Vulkan templates are passed the following parameters:
+                - vkheader:         Formatted as 'vulkan_core.h'
+                - vkfolder:         Currently 'vulkan'
+                - vkfunctions:      A list of all available vulkan functions as strings
+                - vktypedfunctions: A mapping of VKHandle types to a list of their corresponding functions.
+                
+-s/--sources    Provides a path to a user-defined Jinja2 template which will
+                be used for a generated source/definition file. 
+
 -h              Print this help documentation.
 
 '''.format(GLLoader().blacklist, VKLoader().blacklist)
@@ -57,17 +76,18 @@ PROGRAM_USAGE = '''lsgl.py [-h] -i GL_VK_HEADER_PATH [-o OUTPUT_DIRECTORY] [-e E
 
 # -----------------------------------------------------------------------------
 def run_command_line():
-    default_output = os.path.abspath(os.path.dirname(__file__)) + '/build'
-    default_output = default_output.replace('\\', '/')
+    file_path = os.path.abspath(os.path.dirname(__file__))
+    default_output = os.path.join(file_path, 'build').replace('\\', '/')
 
     parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
                                      description=PROGRAM_DESC,
                                      usage=PROGRAM_USAGE)
 
     parser.add_argument('-i', '--input', required=True, type=str)
-    parser.add_argument('-o', '--output', default=default_output,
-                        type=str)
+    parser.add_argument('-o', '--output', default=default_output, type=str)
     parser.add_argument('-e', '--extensions', nargs='*', type=str)
+    parser.add_argument('-d', '--declarations', type=str)
+    parser.add_argument('-s', '--sources', type=str)
 
     args = parser.parse_args()
 
@@ -90,6 +110,18 @@ def run_command_line():
     loader = VKLoader() if am_vk else GLLoader()
     flavor = 'Vulkan' if am_vk else 'OpenGL'
 
+    if args.declarations:
+        header_template = os.path.realpath(args.declarations)
+    else:
+        header_template = 'lsvk_template.h' if am_vk else 'lsgl_template.h'
+        header_template = os.path.join(file_path, 'templates', header_template)
+
+    if args.sources:
+        source_template = os.path.realpath(args.sources)
+    else:
+        source_template = 'lsvk_template.c' if am_vk else 'lsgl_template.c'
+        source_template = os.path.join(file_path, 'templates', source_template)
+
     if '*' in extensions:
         print(f'All {flavor} extensions enabled.')
         loader.blacklist = []
@@ -107,7 +139,8 @@ def run_command_line():
     print(f'Output directory:       {output_dir}')
     print(f'Extensions enabled:     {extensions!s}')
 
-    loader.generate_loadfile(input_header, output_dir)
+    loader.generate_loadfile(input_header, output_dir, header_template,
+                             source_template)
 
 
 # -----------------------------------------------------------------------------
