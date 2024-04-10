@@ -3,7 +3,8 @@
 from distutils.core import setup
 
 setup(
-    name='LightSky OpenGL Extension Loader',
+    name='lsgl',
+    version='1.0.0',
     description='A script which scans OpenGL header files and generates ' \
                 'custom OpenGL extension loaders.',
     author='Miles Lacey',

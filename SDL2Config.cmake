@@ -12,7 +12,6 @@ endif()
 # #####################################
 # SDL2 VCS Setup
 # #####################################
-set(SDL2_GIT_BRANCH master)
 set(SDL2_INSTALL_PREFIX    ${EXTERNAL_PROJECT_PREFIX})
 set(SDL2_BINARY_DIRECTORY  ${SDL2_INSTALL_PREFIX}/src/Sdl2-build)
 set(SDL2_SOURCE_DIRECTORY  ${SDL2_INSTALL_PREFIX}/src/Sdl2)
@@ -22,7 +21,8 @@ set(SDL2_LIBRARY_DIRECTORY ${SDL2_INSTALL_PREFIX}/lib)
 set(SDL2_REPO "https://github.com/libsdl-org/SDL.git" CACHE STRING "Git repository for SDL.")
 mark_as_advanced(SDL2_REPO)
 
-set(SDL2_BRANCH "release-2.26.4" CACHE STRING "Git branch or tag for checking out SDL2.")
+#set(SDL2_GIT_BRANCH master)
+set(SDL2_BRANCH "release-2.28.x" CACHE STRING "Git branch or tag for checking out SDL2.")
 mark_as_advanced(SDL2_BRANCH)
 
 if (NOT ANDROID)
@@ -58,12 +58,12 @@ endif()
 # #####################################
 if (NOT ANDROID)
     set(SDL2_BUILD_FLAGS
+        -DCMAKE_BUILD_TYPE:STRING=${SDL2_BUILD_TYPE}
         -DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}
         -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
         -DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}
         -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
         -DCMAKE_RC_COMPILER:FILEPATH=${CMAKE_RC_COMPILER}
-        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX:FILEPATH=${SDL2_INSTALL_PREFIX}
         -DCMAKE_SYSTEM_NAME:STRING=${CMAKE_SYSTEM_NAME}
         -DCMAKE_MAKE_PROGRAM:PATH=${CMAKE_MAKE_PROGRAM}
@@ -75,12 +75,12 @@ if (NOT ANDROID)
 
 else()
     set(SDL2_BUILD_FLAGS
+        -DCMAKE_BUILD_TYPE:STRING=${SDL2_BUILD_TYPE}
         -DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}
         -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
         -DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}
         -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
         -DCMAKE_RC_COMPILER:FILEPATH=${CMAKE_RC_COMPILER}
-        -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX:FILEPATH=${SDL2_INSTALL_PREFIX}
         #-DCMAKE_SYSTEM_NAME:STRING=${CMAKE_SYSTEM_NAME}
         -DCMAKE_MAKE_PROGRAM:PATH=${CMAKE_MAKE_PROGRAM}
@@ -107,17 +107,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "iOS")
         /usr/bin
         /usr/local/bin)
 
-    if (NOT CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE RelWithDebInfo)
-    endif()
-    string(TOLOWER ${CMAKE_BUILD_TYPE} SDL_XCODE_BUILD_TYPE)
-
-    if (SDL_XCODE_BUILD_TYPE MATCHES "release" OR SDL_XCODE_BUILD_TYPE MATCHES "minsizerel")
-        set(SDL_XCODE_BUILD_STR Release)
-    else()
-        set(SDL_XCODE_BUILD_STR Debug)
-    endif()
-
     if (LS_BUILD_IOS_SIM)
         set(SDL_XCODE_SDK iphonesimulator)
         set(SDL_XCODE_ARCH -arch x86_64 -arch i386)
@@ -136,11 +125,15 @@ if (CMAKE_SYSTEM_NAME MATCHES "iOS")
             "${SDL2_REPO}"
         GIT_TAG
             "${SDL2_BRANCH}"
+        #UPDATE_COMMAND
+        #    ${GIT_EXECUTABLE} pull origin ${SDL2_BRANCH}
+        UPDATE_DISCONNECTED
+            TRUE
         CONFIGURE_COMMAND
             ${CMAKE_COMMAND} -E make_directory ${SDL2_LIBRARY_DIRECTORY} &&
             ${CMAKE_COMMAND} -E make_directory ${SDL2_INCLUDE_DIRECTORY}
         BUILD_COMMAND
-            ${XCODEBUILD_CMD} SYMROOT=${SDL2_LIBRARY_DIRECTORY} -sdk ${SDL_XCODE_SDK} only_active_arch=no -scheme libSDL-iOS -configuration ${SDL_XCODE_BUILD_STR} -project "${SDL2_SOURCE_DIRECTORY}/Xcode-iOS/SDL/SDL.xcodeproj"
+            ${XCODEBUILD_CMD} SYMROOT=${SDL2_LIBRARY_DIRECTORY} -sdk ${SDL_XCODE_SDK} only_active_arch=no -scheme libSDL-iOS -configuration ${SDL2_LIB_TYPE} -project "${SDL2_SOURCE_DIRECTORY}/Xcode-iOS/SDL/SDL.xcodeproj"
         INSTALL_DIR
             ${SDL2_INSTALL_PREFIX}
         INSTALL_COMMAND
@@ -158,22 +151,20 @@ else()
             "${SDL2_REPO}"
         GIT_TAG
             "${SDL2_BRANCH}"
-        CMAKE_COMMAND
-            ${CMAKE_COMMAND}
+        #UPDATE_COMMAND
+        #    ${GIT_EXECUTABLE} pull origin ${SDL2_BRANCH}
+        UPDATE_DISCONNECTED
+            TRUE
         CMAKE_CACHE_ARGS
             ${SDL2_BUILD_FLAGS}
-        BUILD_COMMAND
-            ${CMAKE_COMMAND} -E make_directory ${SDL2_LIBRARY_DIRECTORY} &&
-            ${CMAKE_COMMAND} -E make_directory ${SDL2_INCLUDE_DIRECTORY} &&
-            ${CMAKE_COMMAND} -E chdir ${SDL2_BINARY_DIRECTORY} ${CMAKE_COMMAND} --build . --config ${CMAKE_CFG_INTDIR}
         INSTALL_DIR
             ${SDL2_INSTALL_PREFIX}
-        INSTALL_COMMAND
-            ${CMAKE_COMMAND} -E chdir ${SDL2_BINARY_DIRECTORY} ${CMAKE_COMMAND} --build . --config ${CMAKE_CFG_INTDIR} --target install
         STEP_TARGETS
             sdl_libs
     )
 endif()
+
+ExternalProject_Add_StepTargets(Sdl2 update)
 
 
 

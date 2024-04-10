@@ -1,10 +1,15 @@
-# LightSky OpenGL Extension Loader
-### A small OpenGL extension loader generator.
+# LightSky OpenGL & Vulkan Extension Loader
+### A small extension loader generator for OpenGL, GL ES, and Vulkan.
 
 
-OpenGL has thousands of vendor-specific functions and loading them all by hand is a massive pain. This Python package allows you to scan an OpenGL[ES] header, and corresponding extension header, then generates C source code which can be used to load all OpenGL functions automatically.
+OpenGL has thousands of vendor-specific functions and loading them all by hand
+is a massive pain. This Python package allows you to scan a OpenGL, OpenGL ES,
+and Vulkan headers, their corresponding extension headers, then generates C
+source code which can be used to load all GL/Vk functions automatically.
 
-The resulting C source code can be added to any C/C++ project and works with all OpenGL versions. It's also compatible with Windows, OSX, and *Nix operating systems.
+The resulting C source code can be added to any C/C++ project and works with
+all OpenGL versions. It's also compatible with Windows, OSX, and *Nix operating
+systems.
 
 To use the loader, follow the usage below:
 ```
