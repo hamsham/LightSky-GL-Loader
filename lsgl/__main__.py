@@ -85,7 +85,7 @@ def run_command_line():
 
     parser.add_argument('-i', '--input', required=True, type=str)
     parser.add_argument('-o', '--output', default=default_output, type=str)
-    parser.add_argument('-e', '--extensions', nargs='*', type=str)
+    parser.add_argument('-e', '--extensions', nargs='*', type=str, default='*')
     parser.add_argument('-d', '--declarations', type=str)
     parser.add_argument('-s', '--sources', type=str)
 
