@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 # -------------------------------------
 # External Package Setup
 # -------------------------------------
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 COMPONENTS Interpreter)
 
 find_file(SDL2_SYS_INCLUDE_DIR
     NAMES
@@ -155,9 +155,11 @@ endfunction()
 # -------------------------------------
 # LSGL Sources
 # -------------------------------------
-add_lsgl_sources(GL     GL/glcorearb.h GL/glext.h     KHR)
-add_lsgl_sources(GLES   GLES/gl.h      GLES/glext.h   KHR EGL)
-add_lsgl_sources(GLES2  GLES2/gl2.h    GLES2/gl2ext.h KHR EGL)
-add_lsgl_sources(GLES3  GLES3/gl3.h    GLES2/gl2ext.h KHR EGL GLES2)
-add_lsgl_sources(GLES31 GLES3/gl31.h   GLES2/gl2ext.h KHR EGL GLES2)
-add_lsgl_sources(GLES32 GLES3/gl32.h   GLES2/gl2ext.h KHR EGL GLES2)
+if (Python3_EXECUTABLE)
+    add_lsgl_sources(GL     GL/glcorearb.h GL/glext.h     KHR)
+    add_lsgl_sources(GLES   GLES/gl.h      GLES/glext.h   KHR EGL)
+    add_lsgl_sources(GLES2  GLES2/gl2.h    GLES2/gl2ext.h KHR EGL)
+    add_lsgl_sources(GLES3  GLES3/gl3.h    GLES2/gl2ext.h KHR EGL GLES2)
+    add_lsgl_sources(GLES31 GLES3/gl31.h   GLES2/gl2ext.h KHR EGL GLES2)
+    add_lsgl_sources(GLES32 GLES3/gl32.h   GLES2/gl2ext.h KHR EGL GLES2)
+endif()
