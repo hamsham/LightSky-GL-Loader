@@ -193,7 +193,8 @@ class GLLoaderIO:
         return lines
 
     @staticmethod
-    def write_gl_loader_sources(version, out_folder, inc_data, src_data):
+    def write_gl_loader_sources(version, out_folder, inc_data, src_data,
+                                result_name):
         """
         Write all header and source file information to a folder, specified at
         runtime.
@@ -213,14 +214,15 @@ class GLLoaderIO:
         :param src_data:
         A string containing the generated OpenGL function loader data which
         will be placed into a C source file.
-        """
-        outname = 'lsgl' if version is GLHeaderInfo.GL_DESKTOP else 'lsgles'
 
+        :param result_name
+        The output name for both resulting header & source files.
+        """
         def write_data(folder, extension, data):
             folder = expand_abspath(folder)
             if not os.path.isdir(folder):
                 os.mkdir(folder)
-            with open('%s/%s%s' % (folder, outname, extension), 'w') as f:
+            with open('%s/%s%s' % (folder, result_name, extension), 'w') as f:
                 f.write(data)
 
         write_data(out_folder, '.h', inc_data)
@@ -314,6 +316,7 @@ class GLLoader:
                 '#ifndef GL_VERSION_1_2',
                 '#ifndef GL_VERSION_1_3',
                 '#ifndef GL_VERSION_1_4',
+                '#ifndef GL_VERSION_ES_CM_1_0',  # GL ES 1.0 compatibility
             ]
         else:
             ext_define = ''  # '#if GL_GLES_PROTOTYPES'
@@ -365,7 +368,8 @@ class GLLoader:
                           gl_header_path,
                           out_folder,
                           header_template,
-                          source_template):
+                          source_template,
+                          result_name):
         """
         Create a C header and source file which can be used to load a set of
         OpenGL functions contained within a user-provided OpenGL header file
@@ -399,10 +403,10 @@ class GLLoader:
             return template.render(glheader=info.include,
                                    glextheader=info.ext_include,
                                    glfolder='GL',
-                                   glversion=info.version,
+                                   gldesktop= 1 if info.version == GLHeaderInfo.GL_DESKTOP else 0,
                                    glfunctions=gl_funcs)
 
         inc_data = populate_template(header_template)
         src_data = populate_template(source_template)
         GLLoaderIO.write_gl_loader_sources(info.version, out_folder, inc_data,
-                                           src_data)
+                                           src_data, result_name)

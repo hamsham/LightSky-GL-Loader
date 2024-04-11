@@ -90,7 +90,7 @@ class VKLoaderIO:
 
 
     @staticmethod
-    def write_vk_loader_sources(out_folder, inc_data, src_data):
+    def write_vk_loader_sources(out_folder, inc_data, src_data, result_name):
         """
         Write all header and source file information to a folder, specified at
         runtime.
@@ -106,12 +106,15 @@ class VKLoaderIO:
         :param src_data:
         A string containing the generated vulkan function loader data which
         will be placed into a C source file.
+
+        :param result_name
+        The output name for both resulting header & source files.
         """
         def write_data(folder, extension, data):
             folder = expand_abspath(folder)
             if not os.path.isdir(folder):
                 os.mkdir(folder)
-            with open('%s/lsvk%s' % (folder, extension), 'w') as f:
+            with open('%s/%s%s' % (folder, result_name, extension), 'w') as f:
                 f.write(data)
 
         write_data(out_folder, '.h', inc_data)
@@ -261,7 +264,8 @@ class VKLoader:
                           vk_header_path,
                           out_folder,
                           header_template,
-                          source_template):
+                          source_template,
+                          result_name):
         """
         Create a C header and source file which can be used to load a set of
         Vulkan functions contained within a user-provided header file.
@@ -295,4 +299,5 @@ class VKLoader:
 
         inc_data = populate_template(header_template)
         src_data = populate_template(source_template)
-        VKLoaderIO.write_vk_loader_sources(out_folder, inc_data, src_data)
+        VKLoaderIO.write_vk_loader_sources(out_folder, inc_data, src_data,
+                                           result_name)

@@ -68,6 +68,9 @@ PROGRAM_USAGE = '''lsgl.py [-h] -i GL_VK_HEADER_PATH [-o OUTPUT_DIRECTORY] [-e E
                 
 -s/--sources    Provides a path to a user-defined Jinja2 template which will
                 be used for a generated source/definition file. 
+                
+-n/--name       Assigns a name to the output header and source files.
+                The default value is 'lshl.h' and 'lsgl.c', respectively. 
 
 -h              Print this help documentation.
 
@@ -88,6 +91,7 @@ def run_command_line():
     parser.add_argument('-e', '--extensions', nargs='*', type=str, default='*')
     parser.add_argument('-d', '--declarations', type=str)
     parser.add_argument('-s', '--sources', type=str)
+    parser.add_argument('-n', '--name', type=str)
 
     args = parser.parse_args()
 
@@ -134,13 +138,18 @@ def run_command_line():
                 print(f'Unknown extension: {extension}')
                 extensions.remove(extension)
 
+    if args.name:
+        result_name = os.path.normpath(parser.name)
+    else:
+        result_name = 'lsvk' if am_vk else 'lsgl'
+
     print(f'Render API Detected:    {flavor}')
     print(f'Input header file:      {input_header}')
     print(f'Output directory:       {output_dir}')
     print(f'Extensions enabled:     {extensions!s}')
 
     loader.generate_loadfile(input_header, output_dir, header_template,
-                             source_template)
+                             source_template, result_name)
 
 
 # -----------------------------------------------------------------------------
