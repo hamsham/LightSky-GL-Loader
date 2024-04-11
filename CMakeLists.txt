@@ -41,19 +41,6 @@ endif()
 # GL Folder Creation
 # -------------------------------------
 function(add_gl_directory glVer)
-    add_custom_command(
-        OUTPUT
-            ${PROJECT_BINARY_DIR}/${glVer}
-        COMMAND
-            ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/${glVer}
-    )
-
-    add_custom_target(lsgl_copy_${glVer}_headers
-        ALL
-        DEPENDS
-            ${PROJECT_BINARY_DIR}/${glVer}
-    )
-
     foreach(glSource ${ARGN})
         string(REGEX REPLACE "[\\/]" "." temp ${glSource})
 
@@ -63,17 +50,16 @@ function(add_gl_directory glVer)
             DEPENDS
                 ${PROJECT_SOURCE_DIR}/${glSource}
             COMMAND
+                ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/${glVer}
+            COMMAND
                 ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/${glSource} ${PROJECT_BINARY_DIR}/${glSource}
         )
 
         add_custom_target(lsgl_copy_${temp}
             ALL
             DEPENDS
-                ${PROJECT_BINARY_DIR}/${glVer}
                 ${PROJECT_BINARY_DIR}/${glSource}
         )
-
-        add_dependencies(lsgl_copy_${glVer}_headers lsgl_copy_${temp})
         unset(temp)
     endforeach()
 endfunction()
@@ -141,12 +127,6 @@ function(add_lsgl_sources glVer glHeader glExtHeader)
         target_include_directories(lsgl_test_${glVer} SYSTEM BEFORE PRIVATE ${PROJECT_BINARY_DIR})
         target_compile_definitions(lsgl_test_${glVer} PRIVATE LSGL_HEADER_INCLUDE="${glBaseVer}/lsgl.h")
         target_link_libraries(lsgl_test_${glVer} PRIVATE ${SDL2_SYS_LIB} EGL m)
-
-        add_dependencies(lsgl_test_${glVer} lsgl_${glVer}_sources lsgl_copy_${glBaseVer}_headers)
-
-        foreach(glTarget ${ARGN})
-            add_dependencies(lsgl_test_${glVer} lsgl_copy_${glTarget}_headers)
-        endforeach()
     endif()
 endfunction()
 

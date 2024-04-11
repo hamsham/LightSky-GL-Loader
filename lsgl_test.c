@@ -160,7 +160,7 @@ int main()
     fflush(stdout);
 
     // Set the default back buffer color
-    #if !defined(__gl_glcorearb_h_) && !defined(GL_VERSION_ES_CM_1_0)
+    #if !defined(GL_VERSION_ES_CM_1_0)
         glClearColor(1.f, 0.f, 1.f, 1.f);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     #endif

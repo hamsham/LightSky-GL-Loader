@@ -318,6 +318,9 @@ class GLLoader:
                 '#ifndef GL_VERSION_1_4',
                 '#ifndef GL_VERSION_ES_CM_1_0',  # GL ES 1.0 compatibility
             ]
+
+            if info.include_path.endswith('glcorearb.h'):
+                sys_block = sys_block[-1:1]
         else:
             ext_define = ''  # '#if GL_GLES_PROTOTYPES'
             sys_block = []

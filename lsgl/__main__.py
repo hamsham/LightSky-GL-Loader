@@ -139,7 +139,7 @@ def run_command_line():
                 extensions.remove(extension)
 
     if args.name:
-        result_name = os.path.normpath(parser.name)
+        result_name = os.path.normpath(args.name)
     else:
         result_name = 'lsvk' if am_vk else 'lsgl'
 
