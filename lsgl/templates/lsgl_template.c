@@ -11,15 +11,15 @@
 #include "lsgl.h"
 
 #ifndef EGL_CONTEXT
-    #define EGL_CONTEXT 0
+    #define EGL_CONTEXT 1
 #endif
 
 #ifndef GLX_CONTEXT
-    #define GLX_CONTEXT 1
+    #define GLX_CONTEXT 0
 #endif
 
 #ifndef WGL_CONTEXT
-    #define WGL_CONTEXT 2
+    #define WGL_CONTEXT 0
 #endif
 
 #ifndef UNKNOWN_CONTEXT
@@ -27,7 +27,7 @@
 #endif
 
 #ifndef GL_CONTEXT
-    #error "No context backend enabled."
+    #define GL_CONTEXT EGL_CONTEXT
 #endif
 
 #if GL_CONTEXT == EGL_CONTEXT

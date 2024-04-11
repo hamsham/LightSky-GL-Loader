@@ -6,7 +6,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "lsgl.h"
+// Configured through CMake
+#include LSGL_HEADER_INCLUDE
 
 #ifndef SDL_MAIN_HANDLED
     #define SDL_MAIN_HANDLED
@@ -159,8 +160,10 @@ int main()
     fflush(stdout);
 
     // Set the default back buffer color
-    glClearColor(1.f, 0.f, 1.f, 1.f);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    #if !defined(__gl_glcorearb_h_) && !defined(GL_VERSION_ES_CM_1_0)
+        glClearColor(1.f, 0.f, 1.f, 1.f);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    #endif
 
     terminate:
     terminate_context(pContext);
