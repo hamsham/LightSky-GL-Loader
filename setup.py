@@ -1,8 +1,8 @@
 #!/bin/env python3
 
-from distutils.core import setup
+import setuptools
 
-setup(
+setuptools.setup(
     name='lsgl',
     version='1.0.0',
     description='A script which scans OpenGL header files and generates ' \
